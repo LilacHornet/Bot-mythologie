@@ -84,8 +84,18 @@ class MythologyCog(commands.Cog):
         """Recherche un lien Wikipedia sur la mythologie."""
         await interaction.response.defer()
         
+        # Recherche sur Wikipedia
         result = self.wikipedia_service.get_mythology_link(recherche)
         
+        # Vérifier que result est bien un dictionnaire
+        if not isinstance(result, dict):
+            await interaction.followup.send(
+                f"❌ Erreur inattendue lors de la recherche.",
+                ephemeral=True
+            )
+            return
+        
+        # Vérifier si erreur
         if "error" in result:
             await interaction.followup.send(
                 f"❌ {result['error']}\n💡 Essayez avec un autre terme.",
@@ -93,6 +103,15 @@ class MythologyCog(commands.Cog):
             )
             return
         
+        # Vérifier que les clés nécessaires existent
+        if "title" not in result or "url" not in result:
+            await interaction.followup.send(
+                f"❌ Impossible de récupérer les informations pour '{recherche}'.",
+                ephemeral=True
+            )
+            return
+        
+        # Construire l'embed
         embed = discord.Embed(
             title=f"📖 {result['title']}",
             url=result['url'],

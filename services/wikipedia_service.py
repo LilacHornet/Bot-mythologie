@@ -1,4 +1,13 @@
+import warnings
+import os
+import sys
+
+# Supprimer les avertissements de BeautifulSoup
+warnings.filterwarnings("ignore", category=UserWarning)
+
 import wikipedia
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class WikipediaService:
@@ -6,52 +15,60 @@ class WikipediaService:
     
     def __init__(self, lang: str = "fr"):
         self.lang = lang
+        wikipedia.set_lang(lang)
     
-    def get_mythology_link(self, figure_name: str) -> str:
-        """Récupère le lien Wikipedia pour une figure mythologique."""
+    def get_mythology_link(self, search_term: str) -> dict:
+        """
+        Recherche un article Wikipedia sur la mythologie.
+        Retourne un dictionnaire avec url, title, summary ou error.
+        """
         try:
-            wikipedia.set_lang(self.lang)
-            return self._search_and_get_url(figure_name)
-        except wikipedia.exceptions.PageError:
-            return f"Aucune page Wikipedia trouvée pour '{figure_name}'."
-        except wikipedia.exceptions.DisambiguationError as e:
-            return self._handle_disambiguation(e)
-        except Exception as e:
-            return f"Erreur lors de la recherche: {str(e)}"
-    
-    def _search_and_get_url(self, figure_name: str) -> str:
-        """Recherche et retourne l'URL Wikipedia."""
-        search_results = wikipedia.search(figure_name + " mythologie")
-        
-        if not search_results:
-            return f"Aucun résultat trouvé pour '{figure_name}'."
-        
-        page = wikipedia.page(search_results[0])
-        return page.url
-    
-    def _handle_disambiguation(self, error: wikipedia.exceptions.DisambiguationError) -> str:
-        """Gère les erreurs de désambiguïsation."""
-        try:
-            if error.options:
-                page = wikipedia.page(error.options[0])
-                return page.url
-        except Exception:
-            pass
-        return "Plusieurs résultats trouvés. Soyez plus précis dans votre recherche."
-    
-    def get_summary(self, figure_name: str, sentences: int = 3) -> str:
-        """Récupère un résumé Wikipedia."""
-        try:
-            wikipedia.set_lang(self.lang)
-            search_results = wikipedia.search(figure_name + " mythologie")
+            # Essayer d'abord avec "mythologie grecque"
+            search_query = f"{search_term} mythologie grecque"
+            results = wikipedia.search(search_query, results=5)
             
-            if not search_results:
-                return f"Aucun résultat trouvé pour '{figure_name}'."
+            if not results:
+                # Essayer sans précision
+                results = wikipedia.search(search_term, results=5)
             
-            return wikipedia.summary(search_results[0], sentences=sentences)
-        except wikipedia.exceptions.DisambiguationError as e:
-            if e.options:
-                return wikipedia.summary(e.options[0], sentences=sentences)
-            return "Résultat ambigu."
+            if not results:
+                return {"error": f"Aucun résultat trouvé pour '{search_term}'."}
+            
+            # Essayer chaque résultat jusqu'à en trouver un valide
+            for result in results:
+                try:
+                    page = wikipedia.page(result, auto_suggest=False)
+                    summary = wikipedia.summary(result, sentences=3, auto_suggest=False)
+                    
+                    return {
+                        "title": page.title,
+                        "url": page.url,
+                        "summary": summary
+                    }
+                except wikipedia.exceptions.DisambiguationError as e:
+                    # Prendre la première option de désambiguïsation
+                    if e.options:
+                        try:
+                            first_option = e.options[0]
+                            page = wikipedia.page(first_option, auto_suggest=False)
+                            summary = wikipedia.summary(first_option, sentences=3, auto_suggest=False)
+                            return {
+                                "title": page.title,
+                                "url": page.url,
+                                "summary": summary
+                            }
+                        except Exception:
+                            continue
+                except wikipedia.exceptions.PageError:
+                    continue
+                except Exception:
+                    continue
+            
+            return {"error": f"Impossible de charger les informations pour '{search_term}'."}
+            
         except Exception as e:
-            return f"Erreur: {str(e)}"
+            return {"error": f"Erreur lors de la recherche : {str(e)}"}
+    
+    def search_figure(self, figure_name: str) -> dict:
+        """Recherche spécifique pour une figure mythologique."""
+        return self.get_mythology_link(figure_name)

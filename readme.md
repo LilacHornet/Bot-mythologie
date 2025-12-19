@@ -22,6 +22,8 @@ Commandes disponibles :
 
 /learn (Affiche un message avec des informations sur une figures mythologique )
 
+/randomfigures (Affiche un message avec des informations sur une figures mythologique aléatoire )
+
 /learnfigures ( Donne la liste de toutes les figures disponibles avec la commande learn)
 
 
