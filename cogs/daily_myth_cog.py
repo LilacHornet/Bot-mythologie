@@ -67,18 +67,63 @@ class DailyMythCog(commands.Cog):
         
         await interaction.response.send_message(embed=embed)
     
+    @app_commands.command(name="enablemyth", description="Réactive le mythe quotidien")
+    @app_commands.default_permissions(administrator=True)
+    async def enable_myth(self, interaction: discord.Interaction):
+        """Réactive le mythe quotidien."""
+        channel_id = self.daily_myth_service.get_channel(interaction.guild_id)
+        
+        # Vérifier si un channel a déjà été configuré
+        if not channel_id:
+            await interaction.response.send_message(
+                "❌ Aucun channel n'a été configuré pour le mythe quotidien.\n"
+                "Utilisez `/setmythchannel` pour définir un channel.",
+                ephemeral=True
+            )
+            return
+        
+        # Vérifier si déjà activé
+        if self.daily_myth_service.is_enabled(interaction.guild_id):
+            await interaction.response.send_message(
+                "⚠️ Le mythe quotidien est déjà activé !",
+                ephemeral=True
+            )
+            return
+        
+        # Activer
+        self.daily_myth_service.enable(interaction.guild_id)
+        channel = self.bot.get_channel(channel_id)
+        channel_mention = channel.mention if channel else f"ID: {channel_id}"
+        
+        embed = discord.Embed(
+            title="✅ Mythe quotidien réactivé !",
+            description=f"Le mythe quotidien sera envoyé dans {channel_mention} chaque jour à **{DAILY_MYTH_HOUR:02d}:{DAILY_MYTH_MINUTE:02d}**.",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text="Utilisez /disablemyth pour désactiver")
+        
+        await interaction.response.send_message(embed=embed)
+    
     @app_commands.command(name="disablemyth", description="Désactive le mythe quotidien")
     @app_commands.default_permissions(administrator=True)
     async def disable_myth(self, interaction: discord.Interaction):
         """Désactive le mythe quotidien."""
-        self.daily_myth_service.remove_channel(interaction.guild_id)
+        # Vérifier si configuré
+        if not self.daily_myth_service.is_enabled(interaction.guild_id):
+            await interaction.response.send_message(
+                "⚠️ Le mythe quotidien est déjà désactivé !",
+                ephemeral=True
+            )
+            return
+        
+        self.daily_myth_service.disable(interaction.guild_id)
         
         embed = discord.Embed(
             title="🔕 Mythe quotidien désactivé",
             description="Le mythe quotidien ne sera plus envoyé sur ce serveur.",
             color=discord.Color.orange()
         )
-        embed.set_footer(text="Utilisez /setmythchannel pour réactiver")
+        embed.set_footer(text="Utilisez /enablemyth pour réactiver")
         
         await interaction.response.send_message(embed=embed)
     
@@ -113,7 +158,7 @@ class DailyMythCog(commands.Cog):
                 description="❌ **Désactivé**",
                 color=discord.Color.red()
             )
-            embed.set_footer(text="Utilisez /setmythchannel pour activer")
+            embed.set_footer(text="Utilisez /setmythchannel ou /enablemyth pour activer")
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
     

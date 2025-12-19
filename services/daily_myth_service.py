@@ -45,12 +45,12 @@ class DailyMythService:
     def get_channel(self, guild_id: int) -> int | None:
         """Récupère le channel_id pour un serveur."""
         guild_config = self.config.get(str(guild_id))
-        if guild_config and guild_config.get("enabled"):
+        if guild_config:
             return guild_config.get("channel_id")
         return None
     
     def get_all_channels(self) -> list[int]:
-        """Récupère tous les channels configurés."""
+        """Récupère tous les channels configurés et activés."""
         channels = []
         for guild_id, guild_config in self.config.items():
             if guild_config.get("enabled") and guild_config.get("channel_id"):
@@ -61,6 +61,18 @@ class DailyMythService:
         """Vérifie si le mythe quotidien est activé pour un serveur."""
         guild_config = self.config.get(str(guild_id))
         return guild_config is not None and guild_config.get("enabled", False)
+    
+    def enable(self, guild_id: int):
+        """Active le mythe quotidien pour un serveur."""
+        if str(guild_id) in self.config:
+            self.config[str(guild_id)]["enabled"] = True
+            self._save_config()
+    
+    def disable(self, guild_id: int):
+        """Désactive le mythe quotidien pour un serveur."""
+        if str(guild_id) in self.config:
+            self.config[str(guild_id)]["enabled"] = False
+            self._save_config()
     
     def toggle(self, guild_id: int) -> bool:
         """Active/désactive le mythe quotidien. Retourne le nouvel état."""
