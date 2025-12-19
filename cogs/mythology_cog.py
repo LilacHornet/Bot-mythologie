@@ -28,42 +28,15 @@ class MythologyCog(commands.Cog):
         
         if not result:
             await interaction.followup.send(
-                f"❌ Aucune info sur **{figure}**. Utilisez `/learnfigures`.",
+                f"❌ Aucune info sur **{figure}**.\n"
+                f"💡 Utilisez `/learnfigures` pour voir la liste.\n"
+                f"🔍 Ou `/mythology {figure}` pour chercher sur Wikipedia.",
                 ephemeral=True
             )
             return
         
-        embed = self._build_figure_embed(result)
+        embed = self.learn_service.build_figure_embed(result)
         await interaction.followup.send(embed=embed)
-    
-    def _build_figure_embed(self, figure: dict) -> discord.Embed:
-        """Construit l'embed pour une figure."""
-        embed = discord.Embed(
-            title=f"🏛️ {figure['name']}",
-            description=figure["description"],
-            color=figure.get("color", discord.Color.gold())
-        )
-        
-        fields = [
-            ("roman_name", "🏛️ Nom romain"),
-            ("symbol", "⚜️ Symboles"),
-            ("domain", "👑 Domaine"),
-            ("parents", "👨‍👩‍👧 Parents")
-        ]
-        
-        for key, name in fields:
-            if figure.get(key):
-                embed.add_field(name=name, value=figure[key], inline=True)
-        
-        if figure.get("famous_myths"):
-            myths = "\n".join([f"• {myth}" for myth in figure["famous_myths"]])
-            embed.add_field(
-                name="📜 Mythes célèbres",
-                value=myths,
-                inline=False
-            )
-        
-        return embed
     
     @app_commands.command(name="learnfigures", description="Liste toutes les figures mythologiques disponibles")
     async def learnfigures(self, interaction: discord.Interaction):
@@ -76,11 +49,19 @@ class MythologyCog(commands.Cog):
             color=discord.Color.blue()
         )
         
+        category_emojis = {
+            "Dieux Olympiens": "⚡",
+            "Héros": "🦸",
+            "Créatures": "🐉",
+            "Titans": "🗿"
+        }
+        
         for category, figures in categories.items():
             if figures:
+                emoji = category_emojis.get(category, "🏛️")
                 embed.add_field(
-                    name=f"🏛️ {category}",
-                    value=", ".join(figures),
+                    name=f"{emoji} {category}",
+                    value=", ".join(sorted(figures)),
                     inline=False
                 )
         
@@ -92,35 +73,8 @@ class MythologyCog(commands.Cog):
         await interaction.response.defer()
         
         result = self.learn_service.get_random_figure()
-        
-        embed = discord.Embed(
-            title=f"🎲 {result['name']}",
-            description=result["description"],
-            color=result.get("color", discord.Color.gold())
-        )
-        
-        if result.get("roman_name"):
-            embed.add_field(
-                name="🏛️ Nom romain",
-                value=result["roman_name"],
-                inline=True
-            )
-        
-        if result.get("symbol"):
-            embed.add_field(
-                name="⚜️ Symboles",
-                value=result["symbol"],
-                inline=True
-            )
-        
-        if result.get("domain"):
-            embed.add_field(
-                name="👑 Domaine",
-                value=result["domain"],
-                inline=True
-            )
-        
-        embed.set_footer(text="Utilisez /learn pour chercher une figure spécifique")
+        embed = self.learn_service.build_figure_embed(result)
+        embed.set_footer(text="🎲 Figure aléatoire • Utilisez /learn pour chercher une figure spécifique")
         
         await interaction.followup.send(embed=embed)
     
@@ -132,24 +86,29 @@ class MythologyCog(commands.Cog):
         
         result = self.wikipedia_service.get_mythology_link(recherche)
         
-        if result.startswith("http"):
-            embed = discord.Embed(
-                title=f"📖 Wikipedia : {recherche}",
-                description=f"Voici le lien Wikipedia pour en savoir plus :",
-                color=discord.Color.blue()
-            )
-            embed.add_field(
-                name="🔗 Lien",
-                value=result,
-                inline=False
-            )
-            embed.set_footer(text="🏛️ Source : Wikipedia")
-            await interaction.followup.send(embed=embed)
-        else:
+        if "error" in result:
             await interaction.followup.send(
-                f"❌ {result}",
+                f"❌ {result['error']}\n💡 Essayez avec un autre terme.",
                 ephemeral=True
             )
+            return
+        
+        embed = discord.Embed(
+            title=f"📖 {result['title']}",
+            url=result['url'],
+            description=result.get('summary', 'Aucun résumé disponible.'),
+            color=discord.Color.blue()
+        )
+        
+        embed.add_field(
+            name="🔗 Lien Wikipedia",
+            value=f"[Lire l'article complet]({result['url']})",
+            inline=False
+        )
+        
+        embed.set_footer(text="🏛️ Source : Wikipedia • Mythologie Grecque")
+        
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot: commands.Bot):

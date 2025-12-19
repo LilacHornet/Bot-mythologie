@@ -1,137 +1,133 @@
-import discord
 import random
+import discord
 
-# Collection de mythes pour l'envoi quotidien
-DAILY_MYTHS = [
+myths_collection = [
     {
         "title": "La naissance de Zeus",
-        "content": "Cronos, le titan, dévorait tous ses enfants à leur naissance car une prophétie annonçait qu'un de ses fils le détrônerait. Rhéa, son épouse, réussit à sauver Zeus en le cachant en Crète et en donnant à Cronos une pierre emmaillotée à avaler. Zeus grandit en secret et revint plus tard pour libérer ses frères et sœurs.",
-        "figure": "Zeus",
-        "category": "Origine des dieux",
-        "color": discord.Color.gold()
-    },
-    {
-        "title": "Les douze travaux d'Héraclès",
-        "content": "Pour expier le meurtre de sa famille commis sous l'emprise de la folie envoyée par Héra, Héraclès dut accomplir douze travaux impossibles : tuer le lion de Némée, l'hydre de Lerne, capturer la biche de Cérynie, le sanglier d'Érymanthe, nettoyer les écuries d'Augias, tuer les oiseaux du lac Stymphale, capturer le taureau de Crète, les juments de Diomède, la ceinture d'Hippolyte, les bœufs de Géryon, les pommes d'or des Hespérides, et capturer Cerbère.",
-        "figure": "Héraclès",
-        "category": "Héros",
-        "color": discord.Color.red()
-    },
-    {
-        "title": "Persée et Méduse",
-        "content": "Persée, fils de Zeus et Danaé, fut envoyé par le roi Polydecte pour tuer Méduse, la seule Gorgone mortelle. Avec l'aide d'Athéna et d'Hermès, il reçut des sandales ailées, le casque d'invisibilité d'Hadès et une besace magique. Il trancha la tête de Méduse en la regardant dans son bouclier poli comme un miroir, évitant ainsi son regard pétrifiant.",
-        "figure": "Persée",
-        "category": "Héros",
-        "color": discord.Color.purple()
-    },
-    {
-        "title": "L'enlèvement de Perséphone",
-        "content": "Hadès, dieu des Enfers, tomba amoureux de Perséphone et l'enleva pour en faire sa reine. Sa mère Déméter, déesse des moissons, plongea le monde dans un hiver éternel. Zeus intervint et un accord fut trouvé : Perséphone passerait six mois avec Hadès et six mois avec sa mère, créant ainsi le cycle des saisons.",
-        "figure": "Perséphone",
-        "category": "Origine des saisons",
-        "color": discord.Color.dark_green()
+        "story": "Cronos, craignant d'être renversé par ses enfants comme il avait renversé son père, dévorait chacun de ses enfants à leur naissance. Rhéa, désespérée, cacha le petit Zeus en Crète et donna à Cronos une pierre emmaillotée. Zeus grandit en secret, nourri par la chèvre Amalthée, jusqu'au jour où il revint défier son père.",
+        "moral": "La ruse peut triompher de la force brute.",
+        "category": "Origines",
+        "color": 0xFFD700
     },
     {
         "title": "Prométhée et le feu",
-        "content": "Prométhée, le titan ami des hommes, vola le feu aux dieux de l'Olympe pour l'offrir aux mortels. En punition, Zeus le fit enchaîner au mont Caucase où un aigle lui dévorait le foie chaque jour, celui-ci se régénérant chaque nuit. Il fut finalement libéré par Héraclès.",
-        "figure": "Prométhée",
+        "story": "Prométhée, le Titan ami des hommes, vola le feu sacré de l'Olympe pour l'offrir à l'humanité. Zeus, furieux, le condamna à être enchaîné sur le mont Caucase où un aigle lui dévorait le foie chaque jour. Ce supplice dura des millénaires jusqu'à ce qu'Héraclès le libère.",
+        "moral": "Le sacrifice pour le bien commun a un prix, mais aussi une récompense.",
         "category": "Titans",
-        "color": discord.Color.orange()
+        "color": 0xFF6347
     },
     {
-        "title": "Orphée et Eurydice",
-        "content": "Orphée, le plus grand musicien de la mythologie, descendit aux Enfers pour ramener sa bien-aimée Eurydice, morte d'une morsure de serpent. Sa musique charma Hadès qui accepta de la laisser partir, à condition qu'Orphée ne se retourne pas avant d'avoir quitté les Enfers. Au dernier moment, il se retourna et perdit Eurydice à jamais.",
-        "figure": "Orphée",
-        "category": "Amour tragique",
-        "color": discord.Color.blue()
-    },
-    {
-        "title": "Le jugement de Pâris",
-        "content": "Lors du mariage de Pélée et Thétis, Éris, déesse de la discorde, lança une pomme d'or portant l'inscription 'À la plus belle'. Héra, Athéna et Aphrodite se disputèrent le fruit. Zeus désigna Pâris, prince troyen, comme juge. Chaque déesse lui offrit un présent : Héra le pouvoir, Athéna la sagesse, Aphrodite l'amour de la plus belle femme. Pâris choisit Aphrodite, déclenchant la guerre de Troie.",
-        "figure": "Pâris",
-        "category": "Guerre de Troie",
-        "color": discord.Color.magenta()
+        "title": "Persée et Méduse",
+        "story": "Le jeune Persée, fils de Zeus et Danaé, fut envoyé par le roi Polydecte pour rapporter la tête de Méduse, la seule Gorgone mortelle. Avec l'aide d'Athéna et d'Hermès, il obtint des sandales ailées, un casque d'invisibilité et une besace magique. Il trancha la tête de Méduse en la regardant dans son bouclier poli comme un miroir.",
+        "moral": "Avec l'aide des dieux et de la ruse, même l'impossible devient possible.",
+        "category": "Héros",
+        "color": 0x4169E1
     },
     {
         "title": "Thésée et le Minotaure",
-        "content": "Chaque année, Athènes devait envoyer sept jeunes hommes et sept jeunes femmes en sacrifice au Minotaure, monstre mi-homme mi-taureau enfermé dans le labyrinthe de Crète. Thésée se porta volontaire et, grâce au fil d'Ariane, réussit à tuer le monstre et à retrouver la sortie du labyrinthe.",
-        "figure": "Thésée",
+        "story": "Athènes devait envoyer chaque année sept jeunes hommes et sept jeunes femmes en sacrifice au Minotaure, monstre enfermé dans le labyrinthe de Crète. Thésée se porta volontaire et, grâce au fil d'Ariane, put retrouver son chemin après avoir tué le monstre. Mais il oublia de changer ses voiles noires, causant le suicide de son père Égée.",
+        "moral": "La victoire peut avoir un goût amer si on néglige ceux qu'on aime.",
         "category": "Héros",
-        "color": discord.Color.teal()
+        "color": 0x2E8B57
+    },
+    {
+        "title": "Orphée et Eurydice",
+        "story": "Orphée, le plus grand musicien, perdit sa bien-aimée Eurydice, mordue par un serpent. Fou de douleur, il descendit aux Enfers et charma Hadès avec sa lyre. Le dieu accepta de libérer Eurydice à condition qu'Orphée ne se retourne pas avant d'atteindre la surface. Mais au dernier moment, il se retourna et la perdit à jamais.",
+        "moral": "L'impatience peut nous faire perdre ce que nous chérissons le plus.",
+        "category": "Amour",
+        "color": 0x9370DB
     },
     {
         "title": "La boîte de Pandore",
-        "content": "Pandore fut la première femme mortelle, créée par les dieux sur ordre de Zeus pour punir les hommes après le vol du feu par Prométhée. Elle reçut une jarre (souvent appelée boîte) qu'elle ne devait jamais ouvrir. Poussée par la curiosité, elle l'ouvrit et libéra tous les maux sur l'humanité. Seule l'espérance resta au fond de la jarre.",
-        "figure": "Pandore",
-        "category": "Origine des maux",
-        "color": discord.Color.dark_purple()
+        "story": "Zeus créa Pandore, la première femme, pour punir les hommes d'avoir reçu le feu de Prométhée. Elle reçut une jarre (souvent appelée boîte) qu'elle ne devait jamais ouvrir. Cédant à la curiosité, elle l'ouvrit et libéra tous les maux sur le monde. Seule l'espérance resta au fond de la jarre.",
+        "moral": "La curiosité peut avoir des conséquences terribles, mais l'espoir demeure toujours.",
+        "category": "Origines",
+        "color": 0x8B4513
+    },
+    {
+        "title": "Les douze travaux d'Héraclès",
+        "story": "Héraclès, rendu fou par Héra, tua sa femme et ses enfants. Pour se purifier, il dut accomplir douze travaux impossibles : tuer le lion de Némée, l'hydre de Lerne, capturer Cerbère, et bien d'autres. Ces épreuves firent de lui le plus grand des héros et lui valurent l'immortalité.",
+        "moral": "La rédemption est possible à travers le courage et la persévérance.",
+        "category": "Héros",
+        "color": 0xB8860B
+    },
+    {
+        "title": "Le jugement de Pâris",
+        "story": "Lors du mariage de Thétis et Pélée, Éris lança une pomme d'or 'pour la plus belle'. Héra, Athéna et Aphrodite se disputèrent ce titre. Zeus choisit le prince troyen Pâris pour juger. Chaque déesse tenta de le corrompre. Pâris choisit Aphrodite qui lui promit l'amour de la plus belle femme : Hélène, déclenchant la guerre de Troie.",
+        "moral": "Un choix impulsif peut avoir des conséquences désastreuses pour tous.",
+        "category": "Guerre de Troie",
+        "color": 0xFFD700
     },
     {
         "title": "Icare et Dédale",
-        "content": "Dédale, l'architecte du labyrinthe, fut emprisonné en Crète avec son fils Icare. Il fabriqua des ailes avec des plumes et de la cire pour s'échapper. Il avertit Icare de ne pas voler trop près du soleil. Mais Icare, grisé par le vol, monta trop haut. La cire fondit et il tomba dans la mer qui porte désormais son nom.",
-        "figure": "Icare",
-        "category": "Leçons de vie",
-        "color": discord.Color.gold()
-    },
-    {
-        "title": "Narcisse et Écho",
-        "content": "Narcisse était un jeune homme d'une beauté extraordinaire qui rejetait tous ses prétendants. La nymphe Écho, condamnée à ne répéter que les derniers mots des autres, tomba amoureuse de lui mais fut repoussée. En punition, Némésis fit que Narcisse tombe amoureux de son propre reflet dans l'eau, où il resta jusqu'à sa mort, se transformant en la fleur qui porte son nom.",
-        "figure": "Narcisse",
-        "category": "Métamorphoses",
-        "color": discord.Color.light_grey()
-    },
-    {
-        "title": "La colère d'Achille",
-        "content": "Pendant la guerre de Troie, Agamemnon prit Briséis, la captive d'Achille, provoquant la colère du héros qui refusa de combattre. Sans lui, les Grecs subirent de lourdes défaites. Ce n'est qu'après la mort de son ami Patrocle, tué par Hector, qu'Achille reprit les armes pour venger son compagnon.",
-        "figure": "Achille",
-        "category": "Guerre de Troie",
-        "color": discord.Color.dark_red()
+        "story": "Dédale, architecte du labyrinthe, fut emprisonné en Crète avec son fils Icare. Il fabriqua des ailes avec des plumes et de la cire pour s'échapper. Il avertit Icare de ne pas voler trop près du soleil. Mais le jeune homme, grisé par le vol, ignora les conseils de son père. La cire fondit et il tomba dans la mer.",
+        "moral": "L'orgueil et la désobéissance mènent à la chute.",
+        "category": "Tragédie",
+        "color": 0x87CEEB
     },
     {
         "title": "L'Odyssée d'Ulysse",
-        "content": "Après la guerre de Troie, Ulysse mit dix ans à rentrer chez lui à Ithaque. Il affronta le cyclope Polyphème, résista aux chants des Sirènes, échappa à Charybde et Scylla, et passa sept ans captif de la nymphe Calypso. Finalement rentré, il dut éliminer les prétendants qui courtisaient sa femme Pénélope.",
-        "figure": "Ulysse",
-        "category": "Épopée",
-        "color": discord.Color.dark_blue()
+        "story": "Après la guerre de Troie, Ulysse mit dix ans à rentrer chez lui à Ithaque. Il affronta le cyclope Polyphème, résista aux sirènes, échappa à Charybde et Scylla, et déjoua les pièges de Circé et Calypso. Pendant ce temps, sa fidèle Pénélope repoussait les prétendants en tissant et défaisant un linceul.",
+        "moral": "La ruse, la patience et la fidélité triomphent de tous les obstacles.",
+        "category": "Héros",
+        "color": 0x4682B4
     },
     {
-        "title": "Apollon et Daphné",
-        "content": "Apollon, frappé par une flèche d'Éros, tomba éperdument amoureux de la nymphe Daphné, qui elle fut touchée par une flèche de plomb la rendant insensible à l'amour. Poursuivie par Apollon, elle supplia son père, le dieu-fleuve Pénée, de la sauver. Il la transforma en laurier, arbre qu'Apollon adopta comme symbole sacré.",
-        "figure": "Apollon",
-        "category": "Métamorphoses",
-        "color": discord.Color.yellow()
+        "title": "La colère d'Achille",
+        "story": "Pendant le siège de Troie, Agamemnon prit Briséis, la captive d'Achille. Furieux, le héros refusa de combattre. Sans lui, les Grecs subirent défaite sur défaite. Ce n'est qu'après la mort de son ami Patrocle qu'Achille reprit les armes pour venger celui qu'il aimait, tuant le prince Hector.",
+        "moral": "La colère aveugle mène au malheur, seul l'amour peut nous pousser à agir.",
+        "category": "Guerre de Troie",
+        "color": 0xDAA520
     },
     {
-        "title": "La forge d'Héphaïstos",
-        "content": "Héphaïstos, dieu du feu et de la forge, fut jeté de l'Olympe par sa mère Héra à cause de sa laideur. Recueilli par les nymphes marines, il devint le plus habile des artisans divins. Il forgea les armes des dieux, le trident de Poséidon, l'égide de Zeus, et même des automates de bronze pour le servir.",
-        "figure": "Héphaïstos",
-        "category": "Dieux Olympiens",
-        "color": discord.Color.dark_orange()
+        "title": "Narcisse et Écho",
+        "story": "Narcisse était un jeune homme d'une beauté exceptionnelle mais cruel envers ceux qui l'aimaient. La nymphe Écho, condamnée à répéter les paroles des autres, tomba amoureuse de lui mais fut rejetée. Némésis punit Narcisse en le faisant tomber amoureux de son propre reflet. Il dépérit en contemplant son image dans l'eau.",
+        "moral": "L'orgueil et l'égoïsme mènent à la solitude et à la destruction.",
+        "category": "Amour",
+        "color": 0x00CED1
     }
 ]
 
 
 def get_random_myth() -> dict:
     """Retourne un mythe aléatoire."""
-    return random.choice(DAILY_MYTHS)
+    return random.choice(myths_collection)
 
 
 def get_myth_embed(myth: dict) -> discord.Embed:
-    """Crée un embed pour un mythe."""
+    """Construit l'embed pour un mythe."""
     embed = discord.Embed(
         title=f"📜 {myth['title']}",
-        description=myth["content"],
-        color=myth["color"]
+        description=myth['story'],
+        color=myth.get('color', 0xFFD700)
     )
+    
     embed.add_field(
-        name="👤 Figure principale",
-        value=myth["figure"],
+        name="💡 Morale",
+        value=myth['moral'],
+        inline=False
+    )
+    
+    embed.add_field(
+        name="📁 Catégorie",
+        value=myth.get('category', 'Mythologie'),
         inline=True
     )
-    embed.add_field(
-        name="📂 Catégorie",
-        value=myth["category"],
-        inline=True
-    )
-    embed.set_footer(text="🏛️ Mythe du jour • Utilisez /learn pour en savoir plus")
+    
+    embed.set_footer(text="🏛️ Mythologie Grecque")
+    
     return embed
+
+
+def get_myths_by_category(category: str) -> list[dict]:
+    """Retourne les mythes d'une catégorie donnée."""
+    return [myth for myth in myths_collection if myth.get('category', '').lower() == category.lower()]
+
+
+def get_all_categories() -> list[str]:
+    """Retourne toutes les catégories uniques."""
+    categories = set()
+    for myth in myths_collection:
+        if myth.get('category'):
+            categories.add(myth['category'])
+    return sorted(list(categories))

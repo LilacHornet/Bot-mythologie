@@ -1,11 +1,11 @@
 import os
 import sys
+import random
+import discord
 
-# Ajouter le chemin parent pour les imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from data.figures import mythology_figures
-import random
+from data.mythology_info import mythology_figures, get_figure, get_figures_by_category
 
 
 class LearnService:
@@ -16,54 +16,58 @@ class LearnService:
     
     def search_figure(self, name: str) -> dict | None:
         """Recherche une figure mythologique par son nom."""
-        name_lower = name.lower().strip()
-        
-        # Recherche exacte
-        for figure in self.figures:
-            if self._matches_figure(figure, name_lower):
-                return figure
-        
-        # Recherche partielle
-        for figure in self.figures:
-            if self._partial_match(figure, name_lower):
-                return figure
-        
-        return None
-    
-    def _matches_figure(self, figure: dict, name: str) -> bool:
-        """Vérifie si le nom correspond exactement à une figure."""
-        if figure["name"].lower() == name:
-            return True
-        if figure.get("roman_name", "").lower() == name:
-            return True
-        return name in [alias.lower() for alias in figure.get("aliases", [])]
-    
-    def _partial_match(self, figure: dict, name: str) -> bool:
-        """Vérifie si le nom correspond partiellement à une figure."""
-        if name in figure["name"].lower():
-            return True
-        if name in figure.get("roman_name", "").lower():
-            return True
-        return any(name in alias.lower() for alias in figure.get("aliases", []))
+        return get_figure(name)
     
     def get_random_figure(self) -> dict:
         """Retourne une figure mythologique aléatoire."""
-        return random.choice(self.figures)
+        return random.choice(list(self.figures.values()))
     
     def get_all_figures(self) -> list[str]:
         """Retourne la liste de toutes les figures."""
-        return [figure["name"] for figure in self.figures]
+        return [figure["name"] for figure in self.figures.values()]
     
     def get_figures_by_category(self) -> dict[str, list[str]]:
         """Retourne les figures groupées par catégorie."""
-        categories = {}
-        for figure in self.figures:
-            category = figure.get("category", "Autre")
-            if category not in categories:
-                categories[category] = []
-            categories[category].append(figure["name"])
-        return categories
+        return get_figures_by_category()
     
     def get_figure_count(self) -> int:
         """Retourne le nombre de figures."""
         return len(self.figures)
+    
+    def build_figure_embed(self, figure: dict) -> discord.Embed:
+        """Construit l'embed pour une figure mythologique."""
+        emoji = figure.get("image_emoji", "🏛️")
+        color = figure.get("color", 0xFFD700)
+        
+        embed = discord.Embed(
+            title=f"{emoji} {figure['name']}",
+            description=figure.get("description", ""),
+            color=color
+        )
+        
+        # Champs principaux
+        fields = [
+            ("🏛️ Nom romain", figure.get("roman_name")),
+            ("👑 Titre", figure.get("title")),
+            ("⚜️ Domaine", figure.get("domain")),
+            ("👨‍👩‍👧 Parents", figure.get("parents")),
+            ("👫 Fratrie", figure.get("siblings")),
+            ("💑 Époux/Épouse", figure.get("consort")),
+            ("👶 Enfants", figure.get("children"))
+        ]
+        
+        for name, value in fields:
+            if value:
+                embed.add_field(name=name, value=value, inline=True)
+        
+        # Symboles
+        if figure.get("symbols"):
+            symbols = ", ".join(figure["symbols"]) if isinstance(figure["symbols"], list) else figure["symbols"]
+            embed.add_field(name="🔱 Symboles", value=symbols, inline=True)
+        
+        # Mythes célèbres
+        if figure.get("famous_myths"):
+            myths_text = "\n".join([f"• {myth}" for myth in figure["famous_myths"]])
+            embed.add_field(name="📜 Mythes célèbres", value=myths_text, inline=False)
+        
+        return embed

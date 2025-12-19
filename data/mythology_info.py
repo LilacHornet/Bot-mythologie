@@ -382,3 +382,66 @@ mythology_figures = {
         "color": 0x4682B4
     }
 }
+
+
+# ==================== FONCTIONS ====================
+
+def get_figure(name: str) -> dict | None:
+    """Récupère une figure mythologique par son nom."""
+    name_lower = name.lower().strip()
+    
+    # Recherche directe par clé
+    if name_lower in mythology_figures:
+        return mythology_figures[name_lower]
+    
+    # Recherche par nom ou nom romain
+    for key, figure in mythology_figures.items():
+        if name_lower == figure["name"].lower():
+            return figure
+        if figure.get("roman_name") and name_lower == figure["roman_name"].lower():
+            return figure
+    
+    # Recherche partielle
+    for key, figure in mythology_figures.items():
+        if name_lower in figure["name"].lower():
+            return figure
+        if figure.get("roman_name") and name_lower in figure["roman_name"].lower():
+            return figure
+    
+    return None
+
+
+def get_all_figures() -> list[str]:
+    """Retourne la liste de tous les noms de figures."""
+    return [figure["name"] for figure in mythology_figures.values()]
+
+
+def get_figures_by_category() -> dict[str, list[str]]:
+    """Retourne les figures groupées par catégorie."""
+    categories = {
+        "Dieux Olympiens": [],
+        "Héros": [],
+        "Créatures": [],
+        "Titans": []
+    }
+    
+    heroes = ["heracles", "persee", "thesee", "ulysse", "achille", "jason", "orphee"]
+    creatures = ["meduse", "minotaure", "cerbere"]
+    titans = ["cronos", "prometheus", "atlas"]
+    
+    for key, figure in mythology_figures.items():
+        if key in heroes:
+            categories["Héros"].append(figure["name"])
+        elif key in creatures:
+            categories["Créatures"].append(figure["name"])
+        elif key in titans:
+            categories["Titans"].append(figure["name"])
+        else:
+            categories["Dieux Olympiens"].append(figure["name"])
+    
+    return categories
+
+
+def get_figure_count() -> int:
+    """Retourne le nombre total de figures."""
+    return len(mythology_figures)
