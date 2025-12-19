@@ -1,1 +1,1 @@
-from .questions import mythology_questions
+from .questions import mythology_questions, DIFFICULTY_POINTS, DIFFICULTY_CONFIG
