@@ -23,4 +23,6 @@ Le bot affiche également un mythe aléatoire par jour :
     /disablemyth (Desactive le mythe quotidien)
     /mythstatus (Affiche le statut du mythe quotidien)
     /setmythchannel (Indique dans quelle channel envoyer le mythe quotidien)
+    /setmythtime (Définit l'heure d'envoi du mythe)
     /myth (Affiche immédiatement un mythe aleatoire)
+    

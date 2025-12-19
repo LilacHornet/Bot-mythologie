@@ -1,9 +1,9 @@
 {
     "535561510047580171": {
         "username": "lilachornet",
-        "correct": 8,
-        "wrong": 2,
-        "total": 10,
+        "correct": 9,
+        "wrong": 3,
+        "total": 12,
         "by_difficulty": {
             "easy": {
                 "correct": 2,
@@ -14,11 +14,11 @@
                 "wrong": 1
             },
             "hard": {
-                "correct": 2,
-                "wrong": 1
+                "correct": 3,
+                "wrong": 2
             }
         },
-        "points": 12
+        "points": 15
     },
     "546359817933946890": {
         "username": "william4911",
