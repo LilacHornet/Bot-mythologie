@@ -4,25 +4,41 @@ lien du github : https://github.com/LilacHornet/Bot-mythologie
 
 Commandes disponibles : 
     
-    /quiz  (Lance un quiz. Reponse possible soit directement dans le chat soit avec la commande answer)
-    /quizstatus ( Affiche le statut du quiz en cours)
-    /endquiz ( Arrete le quiz. Le quiz s'arrete seul au bout de 30 secondes)
-    /answer (Repondre au quiz)
-    
-    /mythology (Donne le lien de l'article wikipédia correspondant à l'argument)
-    
-    /learn (Affiche un message avec des informations sur une figures mythologique )
-    /learnfigures ( Donne la liste de toutes les figures disponibles avec la commande learn)
-    
-    /funfact ( Affiche une anectode mythologique aléatoire)
-    /funfactcount (Affiche le nombre de funfacts disponible total et par catégorie)
+📚 Commandes d'apprentissage
 
-Le bot affiche également un mythe aléatoire par jour :
-    
-    /enablemyth (Active le mythe quotidien)
-    /disablemyth (Desactive le mythe quotidien)
-    /mythstatus (Affiche le statut du mythe quotidien)
-    /setmythchannel (Indique dans quelle channel envoyer le mythe quotidien)
-    /setmythtime (Définit l'heure d'envoi du mythe)
-    /myth (Affiche immédiatement un mythe aleatoire)
-    
+/learn [figure]	Affiche les informations sur une figure mythologique
+/learnfigures	Liste toutes les figures mythologiques disponibles
+/randomfigure	Découvre une figure mythologique au hasard
+/mythology [recherche]	Recherche un article Wikipedia sur la mythologie
+
+🎮 Commandes de quiz
+
+/quiz	Lance un quiz (difficulté aléatoire, mode texte)
+/quiz difficulty:[easy/medium/hard]	Lance un quiz avec une difficulté spécifique
+/quiz mode:[text/qcm]	Lance un quiz en mode texte ou QCM (boutons)
+/answer [réponse]	Répond à la question du quiz (mode texte uniquement)
+/endquiz	Termine le quiz en cours et révèle la réponse
+/quizstatus	Affiche le statut du quiz en cours
+
+📊 Commandes de statistiques
+
+/stats	Affiche tes statistiques personnelles
+/stats utilisateur:[@user]	Affiche les stats d'un autre joueur
+/leaderboard	Affiche le classement des meilleurs joueurs
+/leaderboard page:[n]	Affiche une page spécifique du classement
+/resetstats	Réinitialise tes statistiques (avec confirmation)
+
+📜 Commandes de mythe quotidien
+
+/myth	Affiche un mythe aléatoire immédiatement	Tous
+/mythstatus	Affiche le statut du mythe quotidien	Tous
+/setmythchannel [channel]	Définit le channel pour le mythe quotidien	Admin
+/setmythtime [heure] [minute]	Définit l'heure d'envoi du mythe	Admin
+/enablemyth	Réactive le mythe quotidien	Admin
+/disablemyth	Désactive le mythe quotidien	Admin
+
+🎲 Commandes funfact
+
+
+/funfact	Affiche un fait amusant sur la mythologie grecque
+/funfactcount	Affiche le nombre de funfacts et les catégories
