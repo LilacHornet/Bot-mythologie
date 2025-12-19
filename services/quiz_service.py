@@ -39,7 +39,7 @@ class QuizService:
         question = random.choice(self.questions[difficulty])
         return question, difficulty
     
-    def start_quiz(self, channel_id: int, difficulty: str = None) -> tuple[dict, str, datetime]:
+    def start_quiz(self, channel_id: int, difficulty: str = None, qcm_mode: bool = False) -> tuple[dict, str, datetime]:
         """
         Démarre un quiz dans un channel.
         Retourne (question_data, difficulty, end_time).
@@ -48,17 +48,37 @@ class QuizService:
         start_time = datetime.now()
         end_time = start_time + timedelta(seconds=QUIZ_DURATION)
         
+        # Mélanger les choix pour le mode QCM
+        shuffled_choices = None
+        if qcm_mode and "choices" in question:
+            shuffled_choices = question["choices"].copy()
+            random.shuffle(shuffled_choices)
+        
         self.active_quizzes[channel_id] = {
             "question": question,
             "difficulty": diff,
             "started_at": start_time,
-            "ends_at": end_time
+            "ends_at": end_time,
+            "qcm_mode": qcm_mode,
+            "shuffled_choices": shuffled_choices
         }
         # Réinitialiser les utilisateurs ayant répondu et les résultats
         self.answered_users[channel_id] = set()
         self.quiz_results[channel_id] = []
         
         return question, diff, end_time
+    
+    def is_qcm_mode(self, channel_id: int) -> bool:
+        """Vérifie si le quiz est en mode QCM."""
+        if channel_id not in self.active_quizzes:
+            return False
+        return self.active_quizzes[channel_id].get("qcm_mode", False)
+    
+    def get_shuffled_choices(self, channel_id: int) -> list | None:
+        """Récupère les choix mélangés pour le mode QCM."""
+        if channel_id not in self.active_quizzes:
+            return None
+        return self.active_quizzes[channel_id].get("shuffled_choices")
     
     def has_active_quiz(self, channel_id: int) -> bool:
         """Vérifie si un channel a un quiz en cours."""
@@ -147,9 +167,38 @@ class QuizService:
         correct_answer = question_data["answer"]
         alternatives = question_data.get("alternatives", [])
         
-        all_valid_answers = [correct_answer] + alternatives
+        # Pour le mode QCM, vérifier aussi le choix exact
+        choices = question_data.get("choices", [])
+        correct_choice = choices[0] if choices else correct_answer  # Le premier choix est toujours le bon
+        
+        all_valid_answers = [correct_answer.lower()] + [alt.lower() for alt in alternatives] + [correct_choice.lower()]
         is_correct = user_answer in all_valid_answers
         
+        points = DIFFICULTY_POINTS[difficulty] if is_correct else 0
+        
+        return is_correct, correct_answer, difficulty, points
+    
+    def check_qcm_answer(self, channel_id: int, choice_index: int) -> tuple[bool, str, str, int]:
+        """
+        Vérifie la réponse QCM d'un utilisateur.
+        Retourne (is_correct, correct_answer, difficulty, points).
+        """
+        if channel_id not in self.active_quizzes:
+            return False, "", "", 0
+        
+        quiz_data = self.active_quizzes[channel_id]
+        question_data = quiz_data["question"]
+        difficulty = quiz_data["difficulty"]
+        shuffled_choices = quiz_data.get("shuffled_choices", [])
+        
+        if not shuffled_choices or choice_index >= len(shuffled_choices):
+            return False, "", difficulty, 0
+        
+        selected_choice = shuffled_choices[choice_index]
+        correct_choice = question_data["choices"][0]  # Le premier choix est toujours le bon
+        correct_answer = question_data["answer"]
+        
+        is_correct = selected_choice == correct_choice
         points = DIFFICULTY_POINTS[difficulty] if is_correct else 0
         
         return is_correct, correct_answer, difficulty, points

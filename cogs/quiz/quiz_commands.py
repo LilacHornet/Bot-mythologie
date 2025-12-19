@@ -6,33 +6,42 @@ from typing import Optional
 
 from services.quiz_service import QUIZ_DURATION
 from data.questions import DIFFICULTY_CONFIG
+from .quiz_views import QuizQCMView
 
 
 class QuizCommands:
     """Commandes slash pour le quiz."""
     
     @app_commands.command(name="quiz", description="Réponds à une question sur la mythologie !")
-    @app_commands.describe(difficulty="Choisis la difficulté (easy, medium, hard)")
+    @app_commands.describe(
+        difficulty="Choisis la difficulté (easy, medium, hard)",
+        mode="Choisis le mode de jeu"
+    )
     @app_commands.choices(difficulty=[
         app_commands.Choice(name="🟢 Facile", value="easy"),
         app_commands.Choice(name="🟠 Moyen", value="medium"),
         app_commands.Choice(name="🔴 Difficile", value="hard")
     ])
-    async def quiz(self, interaction: discord.Interaction, difficulty: Optional[str] = None):
+    @app_commands.choices(mode=[
+        app_commands.Choice(name="💬 Texte (écrire la réponse)", value="text"),
+        app_commands.Choice(name="🔘 QCM (boutons cliquables)", value="qcm")
+    ])
+    async def quiz(self, interaction: discord.Interaction, difficulty: Optional[str] = None, mode: Optional[str] = "text"):
         """Pose une question de mythologie dans le channel."""
         channel_id = interaction.channel_id
+        qcm_mode = mode == "qcm"
         
         # Vérifier s'il y a déjà un quiz en cours dans ce channel
         if self.quiz_service.has_active_quiz(channel_id):
             remaining = self.quiz_service.get_remaining_time(channel_id)
             await interaction.response.send_message(
-                f"⚠️ Un quiz est déjà en cours ! Il reste **{remaining}** secondes.\nÉcris ta réponse directement dans le chat !",
+                f"⚠️ Un quiz est déjà en cours ! Il reste **{remaining}** secondes.",
                 ephemeral=True
             )
             return
         
         # Démarrer le quiz
-        question_data, diff, end_time = self.quiz_service.start_quiz(channel_id, difficulty)
+        question_data, diff, end_time = self.quiz_service.start_quiz(channel_id, difficulty, qcm_mode)
         diff_config = self.quiz_service.get_difficulty_config(diff)
         
         embed = discord.Embed(
@@ -55,14 +64,29 @@ class QuizCommands:
             value=f"**{QUIZ_DURATION}** secondes",
             inline=True
         )
-        embed.add_field(
-            name="💬 Comment jouer",
-            value="**Écris ta réponse directement dans le chat !**",
-            inline=False
-        )
-        embed.set_footer(text=f"⏰ Le quiz se termine automatiquement dans {QUIZ_DURATION} secondes")
         
-        await interaction.response.send_message(embed=embed)
+        if qcm_mode:
+            embed.add_field(
+                name="🔘 Mode QCM",
+                value="**Clique sur un bouton pour répondre !**",
+                inline=False
+            )
+            embed.set_footer(text=f"⏰ Le quiz se termine automatiquement dans {QUIZ_DURATION} secondes")
+            
+            # Créer la vue avec les boutons
+            shuffled_choices = self.quiz_service.get_shuffled_choices(channel_id)
+            view = QuizQCMView(shuffled_choices, channel_id, self, timeout=QUIZ_DURATION)
+            
+            await interaction.response.send_message(embed=embed, view=view)
+        else:
+            embed.add_field(
+                name="💬 Mode Texte",
+                value="**Écris ta réponse directement dans le chat !**",
+                inline=False
+            )
+            embed.set_footer(text=f"⏰ Le quiz se termine automatiquement dans {QUIZ_DURATION} secondes")
+            
+            await interaction.response.send_message(embed=embed)
         
         # Annuler l'ancien timer s'il existe
         if channel_id in self.quiz_timers:
@@ -73,7 +97,7 @@ class QuizCommands:
             self.end_quiz_after_timeout(channel_id)
         )
     
-    @app_commands.command(name="answer", description="Réponds à la question du quiz (ou écris directement dans le chat)")
+    @app_commands.command(name="answer", description="Réponds à la question du quiz (mode texte uniquement)")
     @app_commands.describe(reponse="Ta réponse à la question")
     async def answer(self, interaction: discord.Interaction, reponse: str):
         """Vérifie la réponse de l'utilisateur."""
@@ -84,6 +108,14 @@ class QuizCommands:
         if not self.quiz_service.has_active_quiz(channel_id):
             await interaction.response.send_message(
                 "❌ Il n'y a pas de quiz en cours ou le temps est écoulé ! Utilise `/quiz` pour en lancer un.",
+                ephemeral=True
+            )
+            return
+        
+        # Vérifier si c'est un quiz QCM
+        if self.quiz_service.is_qcm_mode(channel_id):
+            await interaction.response.send_message(
+                "🔘 Ce quiz est en mode QCM ! Clique sur un bouton pour répondre.",
                 ephemeral=True
             )
             return
@@ -151,6 +183,7 @@ class QuizCommands:
         )
         embed.set_footer(text=f"👥 {answered_count} personne(s) ont répondu • La réponse sera révélée à la fin !")
         
+        # Réponse cachée (ephemeral=True)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
     @app_commands.command(name="endquiz", description="Termine le quiz en cours et révèle la réponse")
@@ -246,6 +279,7 @@ class QuizCommands:
         diff_config = self.quiz_service.get_difficulty_config(difficulty)
         answered_count = self.quiz_service.get_answered_count(channel_id)
         remaining_time = self.quiz_service.get_remaining_time(channel_id)
+        is_qcm = self.quiz_service.is_qcm_mode(channel_id)
         
         # Vérifier si l'utilisateur a déjà répondu
         has_answered = self.quiz_service.has_user_answered(channel_id, interaction.user.id)
@@ -271,6 +305,11 @@ class QuizCommands:
             inline=True
         )
         embed.add_field(
+            name="🎮 Mode",
+            value="🔘 QCM" if is_qcm else "💬 Texte",
+            inline=True
+        )
+        embed.add_field(
             name="👥 Réponses",
             value=f"{answered_count} participant(s)",
             inline=True
@@ -280,6 +319,10 @@ class QuizCommands:
             value="✅ Tu as déjà répondu" if has_answered else "⏳ Tu n'as pas encore répondu",
             inline=True
         )
-        embed.set_footer(text="Écris ta réponse dans le chat • /endquiz pour terminer")
+        
+        if is_qcm:
+            embed.set_footer(text="Clique sur un bouton pour répondre • /endquiz pour terminer")
+        else:
+            embed.set_footer(text="Écris ta réponse dans le chat • /endquiz pour terminer")
         
         await interaction.response.send_message(embed=embed, ephemeral=True)

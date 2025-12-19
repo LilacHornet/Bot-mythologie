@@ -7,7 +7,7 @@ class QuizListeners:
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """Écoute les messages pour détecter les réponses au quiz."""
+        """Écoute les messages pour détecter les réponses au quiz (mode texte uniquement)."""
         # Ignorer les messages du bot
         if message.author.bot:
             return
@@ -17,6 +17,10 @@ class QuizListeners:
         
         # Vérifier s'il y a un quiz en cours dans ce channel
         if not self.quiz_service.has_active_quiz(channel_id):
+            return
+        
+        # Ignorer si c'est un quiz QCM
+        if self.quiz_service.is_qcm_mode(channel_id):
             return
         
         # Vérifier si l'utilisateur a déjà répondu

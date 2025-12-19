@@ -2,8 +2,8 @@
     "535561510047580171": {
         "username": "lilachornet",
         "correct": 8,
-        "wrong": 1,
-        "total": 9,
+        "wrong": 2,
+        "total": 10,
         "by_difficulty": {
             "easy": {
                 "correct": 2,
@@ -15,7 +15,7 @@
             },
             "hard": {
                 "correct": 2,
-                "wrong": 0
+                "wrong": 1
             }
         },
         "points": 12
