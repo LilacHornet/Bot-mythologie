@@ -1,34 +1,32 @@
 import discord
 from discord.ext import commands
-from config import DISCORD_TOKEN, WELCOME_CHANNEL_ID
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-class MythologyBot(commands.Bot):
-    """Bot principal de mythologie."""
-    
-    def __init__(self):
-        intents = discord.Intents.all()
-        super().__init__(command_prefix="!", intents=intents)
-    
-    async def setup_hook(self):
-        """Charge les cogs au démarrage."""
-        await self.load_extension("cogs.mythology_cog")
-        await self.load_extension("cogs.quiz_cog")
-        await self.tree.sync()
-    
-    async def on_ready(self):
-        print(f'We have logged in as {self.user}')
-    
-    async def on_member_join(self, member: discord.Member):
-        channel = self.get_channel(WELCOME_CHANNEL_ID)
-        if channel:
-            await channel.send(f"{member.mention} nous a rejoints.")
+intents = discord.Intents.default()
+intents.message_content = True
 
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-def main():
-    bot = MythologyBot()
-    bot.run(DISCORD_TOKEN)
+@bot.event
+async def on_ready():
+    print(f'{bot.user} est connecté!')
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synchronisé {len(synced)} commande(s)")
+    except Exception as e:
+        print(f"Erreur de synchronisation: {e}")
 
+async def load_cogs():
+    # Charger les cogs simples
+    await bot.load_extension("cogs.mythology_cog")
+    # Charger le cog quiz (nouveau chemin)
+    await bot.load_extension("cogs.quiz")
 
-if __name__ == "__main__":
-    main()
+@bot.event
+async def setup_hook():
+    await load_cogs()
+
+bot.run(os.getenv('DISCORD_TOKEN'))

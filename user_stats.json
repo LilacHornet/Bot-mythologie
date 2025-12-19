@@ -1,12 +1,34 @@
 {
     "535561510047580171": {
         "username": "lilachornet",
-        "correct": 3,
-        "wrong": 0,
-        "total": 3,
+        "correct": 7,
+        "wrong": 1,
+        "total": 8,
         "by_difficulty": {
             "easy": {
-                "correct": 0,
+                "correct": 2,
+                "wrong": 0
+            },
+            "medium": {
+                "correct": 2,
+                "wrong": 1
+            },
+            "hard": {
+                "correct": 1,
+                "wrong": 0
+            }
+        },
+        "points": 9
+    },
+    "546359817933946890": {
+        "username": "william4911",
+        "correct": 1,
+        "wrong": 0,
+        "total": 1,
+        "points": 1,
+        "by_difficulty": {
+            "easy": {
+                "correct": 1,
                 "wrong": 0
             },
             "medium": {
@@ -14,10 +36,9 @@
                 "wrong": 0
             },
             "hard": {
-                "correct": 1,
+                "correct": 0,
                 "wrong": 0
             }
-        },
-        "points": 3
+        }
     }
 }
