@@ -5,11 +5,14 @@ from discord import app_commands
 from dotenv import load_dotenv
 import wikipedia
 import random
+import json
 
 load_dotenv()
 
 bot = discord.Client(intents=discord.Intents.all())
 tree = app_commands.CommandTree(bot)
+
+STATS_FILE = "user_stats.json"
 
 # Questions de mythologie avec réponses
 mythology_questions = [
@@ -67,6 +70,52 @@ mythology_questions = [
 
 # Stockage des quiz en cours par utilisateur
 active_quizzes = {}
+
+def load_stats() -> dict:
+    """Charge les statistiques depuis le fichier JSON."""
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, "r", encoding="utf-8") as f:
+                content = f.read()
+                if content.strip():  # Vérifier que le fichier n'est pas vide
+                    return json.loads(content)
+        except (json.JSONDecodeError, IOError):
+            # Si le fichier est corrompu, on retourne un dict vide
+            pass
+    return {}
+
+def save_stats(stats: dict):
+    """Sauvegarde les statistiques dans le fichier JSON."""
+    with open(STATS_FILE, "w", encoding="utf-8") as f:
+        json.dump(stats, f, indent=4, ensure_ascii=False)
+
+def update_user_stats(user_id: int, username: str, is_correct: bool):
+    """Met à jour les statistiques d'un utilisateur."""
+    stats = load_stats()
+    user_id_str = str(user_id)
+    
+    if user_id_str not in stats:
+        stats[user_id_str] = {
+            "username": username,
+            "correct": 0,
+            "wrong": 0,
+            "total": 0
+        }
+    
+    stats[user_id_str]["username"] = username  # Mettre à jour le nom
+    stats[user_id_str]["total"] += 1
+    
+    if is_correct:
+        stats[user_id_str]["correct"] += 1
+    else:
+        stats[user_id_str]["wrong"] += 1
+    
+    save_stats(stats)
+
+def get_user_stats(user_id: int) -> dict | None:
+    """Récupère les statistiques d'un utilisateur."""
+    stats = load_stats()
+    return stats.get(str(user_id))
 
 @bot.event
 async def on_ready():
@@ -153,6 +202,9 @@ async def answer(interaction: discord.Interaction, reponse: str):
     all_valid_answers = [correct_answer] + alternatives
     is_correct = user_answer in all_valid_answers
     
+    # Sauvegarder les stats
+    update_user_stats(user_id, interaction.user.name, is_correct)
+    
     if is_correct:
         embed = discord.Embed(
             title="✅ Bonne réponse !",
@@ -170,6 +222,69 @@ async def answer(interaction: discord.Interaction, reponse: str):
     del active_quizzes[user_id]
     
     embed.set_footer(text="Utilise /quiz pour une nouvelle question !")
+    await interaction.response.send_message(embed=embed)
+
+@tree.command(name="stats", description="Affiche tes statistiques de quiz")
+async def stats(interaction: discord.Interaction):
+    """Affiche les statistiques de l'utilisateur."""
+    user_stats = get_user_stats(interaction.user.id)
+    
+    if not user_stats:
+        await interaction.response.send_message(
+            "📊 Tu n'as pas encore répondu à un quiz ! Utilise `/quiz` pour commencer.",
+            ephemeral=True
+        )
+        return
+    
+    correct = user_stats["correct"]
+    wrong = user_stats["wrong"]
+    total = user_stats["total"]
+    percentage = (correct / total * 100) if total > 0 else 0
+    
+    embed = discord.Embed(
+        title=f"📊 Statistiques de {interaction.user.name}",
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="✅ Bonnes réponses", value=str(correct), inline=True)
+    embed.add_field(name="❌ Mauvaises réponses", value=str(wrong), inline=True)
+    embed.add_field(name="📝 Total", value=str(total), inline=True)
+    embed.add_field(name="📈 Taux de réussite", value=f"{percentage:.1f}%", inline=False)
+    
+    await interaction.response.send_message(embed=embed)
+
+@tree.command(name="leaderboard", description="Affiche le classement des meilleurs joueurs")
+async def leaderboard(interaction: discord.Interaction):
+    """Affiche le classement des joueurs."""
+    stats = load_stats()
+    
+    if not stats:
+        await interaction.response.send_message(
+            "📊 Aucune statistique disponible pour le moment.",
+            ephemeral=True
+        )
+        return
+    
+    # Trier par nombre de bonnes réponses
+    sorted_users = sorted(
+        stats.items(),
+        key=lambda x: x[1]["correct"],
+        reverse=True
+    )[:10]
+    
+    embed = discord.Embed(
+        title="🏆 Classement Mythologie",
+        color=discord.Color.gold()
+    )
+    
+    medals = ["🥇", "🥈", "🥉"]
+    description = ""
+    
+    for i, (user_id, user_stats) in enumerate(sorted_users):
+        medal = medals[i] if i < 3 else f"**{i+1}.**"
+        percentage = (user_stats["correct"] / user_stats["total"] * 100) if user_stats["total"] > 0 else 0
+        description += f"{medal} {user_stats['username']} - {user_stats['correct']} ✅ ({percentage:.1f}%)\n"
+    
+    embed.description = description
     await interaction.response.send_message(embed=embed)
 
 bot.run(os.getenv('DISCORD_TOKEN'))
