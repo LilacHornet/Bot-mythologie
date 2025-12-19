@@ -27,6 +27,10 @@ class DailyMythService:
         with open(self.config_file, 'w', encoding='utf-8') as f:
             json.dump(self.config, f, indent=4, ensure_ascii=False)
     
+    def reload_config(self):
+        """Recharge la configuration depuis le fichier."""
+        self.config = self._load_config()
+    
     def set_channel(self, guild_id: int, channel_id: int):
         """Définit le channel pour le mythe quotidien d'un serveur."""
         existing_config = self.config.get(str(guild_id), {})
@@ -94,7 +98,6 @@ class DailyMythService:
         if str(guild_id) not in self.config:
             return False
         
-        # Validation
         if not (0 <= hour <= 23) or not (0 <= minute <= 59):
             return False
         

@@ -7,84 +7,65 @@ class QuizListeners:
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """Écoute les messages pour détecter les réponses au quiz (mode texte uniquement)."""
-        # Ignorer les messages du bot
+        """Écoute les messages pour détecter les réponses (mode texte)."""
         if message.author.bot:
             return
         
+        if not self._should_process_message(message):
+            return
+        
+        await self._process_quiz_answer(message)
+    
+    def _should_process_message(self, message: discord.Message) -> bool:
+        """Vérifie si le message doit être traité."""
+        channel_id = message.channel.id
+        
+        if not self.quiz_service.has_active_quiz(channel_id):
+            return False
+        if self.quiz_service.is_qcm_mode(channel_id):
+            return False
+        if self.quiz_service.has_user_answered(channel_id, message.author.id):
+            return False
+        if len(message.content) > 50:
+            return False
+        if message.content.startswith(('/', '!')):
+            return False
+        
+        return True
+    
+    async def _process_quiz_answer(self, message: discord.Message):
+        """Traite une réponse de quiz."""
         channel_id = message.channel.id
         user_id = message.author.id
         
-        # Vérifier s'il y a un quiz en cours dans ce channel
-        if not self.quiz_service.has_active_quiz(channel_id):
-            return
+        is_correct, _, difficulty, points = self.quiz_service.check_answer(channel_id, message.content)
         
-        # Ignorer si c'est un quiz QCM
-        if self.quiz_service.is_qcm_mode(channel_id):
-            return
-        
-        # Vérifier si l'utilisateur a déjà répondu
-        if self.quiz_service.has_user_answered(channel_id, user_id):
-            return
-        
-        # Vérifier la réponse
-        reponse = message.content
-        
-        # Ignorer les messages trop longs ou les commandes
-        if len(reponse) > 50 or reponse.startswith('/') or reponse.startswith('!'):
-            return
-        
-        is_correct, correct_answer, difficulty, points = self.quiz_service.check_answer(channel_id, reponse)
-        diff_config = self.quiz_service.get_difficulty_config(difficulty)
-        remaining_time = self.quiz_service.get_remaining_time(channel_id)
-        
-        # Marquer l'utilisateur comme ayant répondu
         self.quiz_service.mark_user_answered(channel_id, user_id, message.author.name, is_correct, points)
+        self.stats_service.update_user_stats(user_id, message.author.name, is_correct, difficulty, points)
         
-        # Sauvegarder les stats
-        self.stats_service.update_user_stats(
-            user_id, 
-            message.author.name, 
-            is_correct, 
-            difficulty, 
-            points
-        )
-        
-        # Nombre de participants
-        answered_count = self.quiz_service.get_answered_count(channel_id)
-        
-        # Envoyer un message privé de confirmation
+        await self._send_dm_feedback(message.author, is_correct, points, channel_id)
+    
+    async def _send_dm_feedback(self, user: discord.User, is_correct: bool, points: int, channel_id: int):
+        """Envoie un feedback en DM."""
         try:
-            if is_correct:
-                embed = discord.Embed(
-                    title="✅ Bonne réponse !",
-                    description=f"Bravo ! Tu as trouvé la bonne réponse !",
-                    color=discord.Color.green()
-                )
-                embed.add_field(
-                    name="Points gagnés",
-                    value=f"⭐ +{points} points",
-                    inline=True
-                )
-            else:
-                embed = discord.Embed(
-                    title="❌ Mauvaise réponse !",
-                    description=f"Ce n'est pas la bonne réponse... La réponse sera révélée à la fin !",
-                    color=discord.Color.red()
-                )
-                embed.add_field(
-                    name="Points gagnés",
-                    value="⭐ +0 points",
-                    inline=True
-                )
-            
-            embed.add_field(
-                name="⏱️ Temps restant",
-                value=f"**{remaining_time}** secondes",
-                inline=True
-            )
-            embed.set_footer(text=f"👥 {answered_count} personne(s) ont répondu")
-            await message.author.send(embed=embed)
+            embed = self._build_dm_embed(is_correct, points, channel_id)
+            await user.send(embed=embed)
         except discord.Forbidden:
-            # L'utilisateur a les DMs désactivés
-            pass
+            pass  # DMs désactivés
+    
+    def _build_dm_embed(self, is_correct: bool, points: int, channel_id: int) -> discord.Embed:
+        """Construit l'embed de feedback DM."""
+        remaining = self.quiz_service.get_remaining_time(channel_id)
+        answered = self.quiz_service.get_answered_count(channel_id)
+        
+        if is_correct:
+            embed = discord.Embed(title="✅ Bonne réponse !", color=discord.Color.green())
+            embed.add_field(name="Points", value=f"⭐ +{points}", inline=True)
+        else:
+            embed = discord.Embed(title="❌ Mauvaise réponse !", color=discord.Color.red())
+            embed.add_field(name="Points", value="⭐ +0", inline=True)
+        
+        embed.add_field(name="⏱️ Restant", value=f"**{remaining}** sec", inline=True)
+        embed.set_footer(text=f"👥 {answered} personne(s) ont répondu")
+        
+        return embed

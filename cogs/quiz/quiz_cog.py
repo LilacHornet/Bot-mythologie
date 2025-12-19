@@ -4,14 +4,12 @@ from discord.ext import commands
 import os
 import sys
 import asyncio
-from typing import Optional
 
 # Ajouter le chemin parent pour les imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from services.quiz_service import QuizService, QUIZ_DURATION
+from services.quiz_service import QuizService
 from services.stats_service import StatsService
-from data.questions import DIFFICULTY_CONFIG
 
 from .quiz_commands import QuizCommands
 from .quiz_listeners import QuizListeners
@@ -26,10 +24,13 @@ class QuizCog(QuizCommands, StatsCommands, QuizListeners, QuizHelpers, commands.
         self.bot = bot
         self.quiz_service = QuizService()
         self.stats_service = StatsService()
-        # Dictionnaire pour stocker les tâches de fin de quiz
         self.quiz_timers: dict[int, asyncio.Task] = {}
     
     def cog_unload(self):
-        """Annule toutes les tâches en cours lors du déchargement du cog."""
+        """Annule toutes les tâches en cours."""
         for task in self.quiz_timers.values():
             task.cancel()
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(QuizCog(bot))

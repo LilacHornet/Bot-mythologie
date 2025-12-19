@@ -2,6 +2,8 @@
     "1450031410659332192": {
         "channel_id": 1451555380885983304,
         "enabled": true,
-        "last_sent": null
+        "last_sent": "2025-12-19T15:20:48.381946",
+        "hour": 15,
+        "minute": 20
     }
 }

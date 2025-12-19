@@ -4,7 +4,6 @@ from discord.ext import commands
 import os
 import sys
 
-# Ajouter le chemin parent pour les imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.learn_service import LearnService
@@ -12,7 +11,7 @@ from services.wikipedia_service import WikipediaService
 
 
 class MythologyCog(commands.Cog):
-    """Cog pour les commandes d'apprentissage sur la mythologie."""
+    """Cog pour les commandes d'apprentissage."""
     
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -20,7 +19,7 @@ class MythologyCog(commands.Cog):
         self.wikipedia_service = WikipediaService()
     
     @app_commands.command(name="learn", description="Apprends sur une figure mythologique")
-    @app_commands.describe(figure="Le nom de la figure mythologique (ex: Zeus, Hercule, Méduse)")
+    @app_commands.describe(figure="Le nom de la figure (ex: Zeus, Hercule)")
     async def learn(self, interaction: discord.Interaction, figure: str):
         """Affiche les informations sur une figure mythologique."""
         await interaction.response.defer()
@@ -29,54 +28,42 @@ class MythologyCog(commands.Cog):
         
         if not result:
             await interaction.followup.send(
-                f"❌ Je n'ai pas trouvé d'informations sur **{figure}**.\n"
-                f"Utilisez `/learnfigures` pour voir la liste des figures disponibles.",
+                f"❌ Aucune info sur **{figure}**. Utilisez `/learnfigures`.",
                 ephemeral=True
             )
             return
         
+        embed = self._build_figure_embed(result)
+        await interaction.followup.send(embed=embed)
+    
+    def _build_figure_embed(self, figure: dict) -> discord.Embed:
+        """Construit l'embed pour une figure."""
         embed = discord.Embed(
-            title=f"🏛️ {result['name']}",
-            description=result["description"],
-            color=result.get("color", discord.Color.gold())
+            title=f"🏛️ {figure['name']}",
+            description=figure["description"],
+            color=figure.get("color", discord.Color.gold())
         )
         
-        if result.get("roman_name"):
-            embed.add_field(
-                name="🏛️ Nom romain",
-                value=result["roman_name"],
-                inline=True
-            )
+        fields = [
+            ("roman_name", "🏛️ Nom romain"),
+            ("symbol", "⚜️ Symboles"),
+            ("domain", "👑 Domaine"),
+            ("parents", "👨‍👩‍👧 Parents")
+        ]
         
-        if result.get("symbol"):
-            embed.add_field(
-                name="⚜️ Symboles",
-                value=result["symbol"],
-                inline=True
-            )
+        for key, name in fields:
+            if figure.get(key):
+                embed.add_field(name=name, value=figure[key], inline=True)
         
-        if result.get("domain"):
-            embed.add_field(
-                name="👑 Domaine",
-                value=result["domain"],
-                inline=True
-            )
-        
-        if result.get("parents"):
-            embed.add_field(
-                name="👨‍👩‍👧 Parents",
-                value=result["parents"],
-                inline=True
-            )
-        
-        if result.get("famous_myths"):
+        if figure.get("famous_myths"):
+            myths = "\n".join([f"• {myth}" for myth in figure["famous_myths"]])
             embed.add_field(
                 name="📜 Mythes célèbres",
-                value="\n".join([f"• {myth}" for myth in result["famous_myths"]]),
+                value=myths,
                 inline=False
             )
         
-        await interaction.followup.send(embed=embed)
+        return embed
     
     @app_commands.command(name="learnfigures", description="Liste toutes les figures mythologiques disponibles")
     async def learnfigures(self, interaction: discord.Interaction):
