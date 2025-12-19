@@ -16,10 +16,9 @@ from data.questions import DIFFICULTY_CONFIG
 from .quiz_commands import QuizCommands
 from .quiz_listeners import QuizListeners
 from .quiz_helpers import QuizHelpers
-from .stats_commands import StatsCommands
 
 
-class QuizCog(QuizCommands, StatsCommands, QuizListeners, QuizHelpers, commands.Cog):
+class QuizCog(QuizCommands, QuizListeners, QuizHelpers, commands.Cog):
     """Cog pour les commandes de quiz."""
     
     def __init__(self, bot: commands.Bot):
