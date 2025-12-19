@@ -3,6 +3,7 @@ Ce projet est un bot discord sur le sujet de la mythologie.
 lien du github : https://github.com/LilacHornet/Bot-mythologie
 
 Commandes disponibles : 
+    
     /quiz  (Lance un quiz. Reponse possible soit directement dans le chat soit avec la commande answer)
     /quizstatus ( Affiche le statut du quiz en cours)
     /endquiz ( Arrete le quiz. Le quiz s'arrete seul au bout de 30 secondes)
@@ -17,6 +18,7 @@ Commandes disponibles :
     /funfactcount (Affiche le nombre de funfacts disponible total et par catégorie)
 
 Le bot affiche également un mythe aléatoire par jour :
+    
     /enablemyth (Active le mythe quotidien)
     /disablemyth (Desactive le mythe quotidien)
     /mythstatus (Affiche le statut du mythe quotidien)
